@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Class ParkAndRide
@@ -24,9 +24,16 @@ class ParkAndRide extends Model
 
     protected $guarded = [];
 
-    /**
-     * @return BelongsTo
-     */
+    protected $fillable = [
+        'lat',
+        'lng',
+        'name',
+        'user_id',
+        'attraction_name',
+        'location_description',
+        'minutes_to_destination',
+    ];
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');

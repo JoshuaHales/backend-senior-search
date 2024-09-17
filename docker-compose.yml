@@ -7,6 +7,7 @@ services:
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
+                NODE_VERSION: '18' # Update for my localy environment
         image: sail-8.0/app
         ports:
             - '${APP_PORT:-80}:80'
@@ -39,6 +40,7 @@ services:
           test: ["CMD", "mysqladmin", "ping"]
     redis:
         image: 'redis:alpine'
+        platform: linux/amd64 # Update for my localy environment
         ports:
             - '${FORWARD_REDIS_PORT:-6379}:6379'
         volumes:
@@ -57,6 +59,7 @@ services:
             - sail
     mailhog:
         image: 'mailhog/mailhog:latest'
+        platform: linux/amd64 # Update for my localy environment
         ports:
             - '${FORWARD_MAILHOG_PORT:-1025}:1025'
             - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
@@ -64,6 +67,7 @@ services:
             - sail
     selenium:
        image: 'selenium/standalone-chrome'
+       platform: linux/amd64 # Update for my localy environment
        volumes:
             - '/dev/shm:/dev/shm'
        networks:

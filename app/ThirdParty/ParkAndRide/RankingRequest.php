@@ -7,12 +7,12 @@ class RankingRequest
 {
     private $ids;
 
-    public function __construct(array $ids)
+    public function __construct($ids)
     {
         $this->ids = $ids;
     }
 
-    public function getIds(): array
+    public function getIds()
     {
         return $this->ids;
     }

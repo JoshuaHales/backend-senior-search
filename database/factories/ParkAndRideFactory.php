@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Model;
 use App\Models\User;
-use App\ParkAndRide;
+use App\Models\Model;
+use App\Models\ParkAndRide;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ParkAndRideFactory extends Factory
