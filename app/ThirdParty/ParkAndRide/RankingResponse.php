@@ -30,11 +30,20 @@ class RankingResponse
 
         sleep(rand(10,60));
 
-        return $this->request->getIds()->sort()->map(function ($val, $key) {
+        return $this->request->getIds()->sort()->map(function ($val, $key) { // The sort does not work by default as ->getIds() by default returns an array?
             return [
                 'park_and_ride_id' => $val,
                 'rank' => $key
             ];
         })->shuffle()->values()->toArray();
+
+        // return collect($this->request->getIds()) // Wrap the array in a collection
+        //     ->sort() // Now sort the collection
+        //     ->map(function ($val, $key) {
+        //         return [
+        //             'park_and_ride_id' => $val,
+        //             'rank' => $key
+        //         ];
+        //     })->shuffle()->values()->toArray(); 
     }
 }

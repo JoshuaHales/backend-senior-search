@@ -2,88 +2,92 @@
 
 namespace App;
 
+use App\Utils\GeoUtils;
+use App\Models\ParkAndRide;
+use App\Models\ParkingSpace;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
+
 class SearchService
 {
-    const WGS84_A = 6378137.0; // Major semiaxis
-    const WGS84_B = 6356752.3; // Major semiaxis
-
-    public function searchParkingSpaces($boundingBox)
+    /**
+     * General method to search for locations within a bounding box.
+     * 
+     * @param  Model $modelClass
+     * @param  array $boundingBox
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    private function searchByBoundingBox(Model $modelClass, array $boundingBox)
     {
-        $results = [];
-        ParkingSpace::whereBetween('lat', [$boundingBox['se_lat'], $boundingBox['nw_lat']])
+        return $modelClass::with('owner')
+            ->whereBetween('lat', [$boundingBox['se_lat'], $boundingBox['nw_lat']])
             ->whereBetween('lng', [$boundingBox['nw_lng'], $boundingBox['se_lng']])
-            ->get()
-            ->each(function ($model) use (&$results) {
-                $results[$model->id] = $model;
-            });
-        return $results;
+            ->get();
     }
 
-    public function searchParkAndRide($boundingBox)
+    /**
+     * Search for ParkingSpaces within the bounding box.
+     * 
+     * @param array $boundingBox
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function searchParkingSpaces(array $boundingBox)
     {
-        $results = [];
-        ParkAndRide::whereBetween('lat', [$boundingBox['se_lat'], $boundingBox['nw_lat']])
-            ->whereBetween('lng', [$boundingBox['nw_lng'], $boundingBox['se_lng']])
-            ->get()
-            ->each(function ($model) use (&$results) {
-                $results[$model->id] = $model;
-            });
-        return $results;
+        Log::info("Searching ParkingSpaces within bounding box: " . json_encode($boundingBox));
+        return $this->searchByBoundingBox(new ParkingSpace, $boundingBox);
+    }
+
+    /**
+     * Search for ParkAndRide within the bounding box.
+     * 
+     * @param array $boundingBox
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function searchParkAndRide(array $boundingBox)
+    {
+        Log::info("Searching ParkAndRide within bounding box: " . json_encode($boundingBox));
+        return $this->searchByBoundingBox(new ParkAndRide, $boundingBox);
     }
 
     /********************* Only edit below at part 4) *******************************/
 
-    public function getBoundingBox($lat, $lng, int $radius)
+    /**
+     * Get the bounding box for a location with a given radius.
+     *
+     * @param float $lat
+     * @param float $lng
+     * @param int $radius
+     * @return array
+     */
+    public function getBoundingBox(float $lat, float $lng, int $radius): array
     {
-        $lat = self::degrees2Radians($lat);
-        $lng = self::degrees2Radians($lng);
+        $lat = GeoUtils::degreesToRadians($lat);
+        $lng = GeoUtils::degreesToRadians($lng);
         $halfSide = 1000 * $radius;
 
-        $radius = self::WGS84EarthRadius($lat);
+        $radius = GeoUtils::earthRadiusAtLatitude($lat);
         $pRadius = $radius * cos($lat);
 
+        return $this->calculateBoundingBox($lat, $lng, $halfSide, $radius, $pRadius);
+    }
+
+    /**
+     * Helper method to calculate the bounding box from latitude, longitude, and radius.
+     *
+     * @param float $lat
+     * @param float $lng
+     * @param float $halfSide
+     * @param float $radius
+     * @param float $pRadius
+     * @return array
+     */
+    private function calculateBoundingBox($lat, $lng, $halfSide, $radius, $pRadius)
+    {
         return [
-            'se_lat' => self::rad2deg($lat - $halfSide/$radius),
-            'nw_lat' => self::rad2deg($lat + $halfSide/$radius),
-            'nw_lng' => self::rad2deg($lng - $halfSide/$pRadius),
-            'se_lng' => self::rad2deg($lng + $halfSide/$pRadius),
+            'se_lat' => GeoUtils::radiansToDegrees($lat - $halfSide / $radius),
+            'nw_lat' => GeoUtils::radiansToDegrees($lat + $halfSide / $radius),
+            'nw_lng' => GeoUtils::radiansToDegrees($lng - $halfSide / $pRadius),
+            'se_lng' => GeoUtils::radiansToDegrees($lng + $halfSide / $pRadius),
         ];
-    }
-
-    /**
-     * Convert degrees to radians.
-     *
-     * @param  $degrees
-     * @return float
-     */
-    public static function degrees2Radians($degrees)
-    {
-        return pi() * $degrees / 180.0;
-    }
-
-    /**
-     * Convert radians to degrees.
-     *
-     * @param  $radians
-     * @return float
-     */
-    public static function rad2deg($radians)
-    {
-        return 180.0 * $radians / pi();
-    }
-
-    /**
-     * Earth radius at a given latitude, according to the WGS-84 ellipsoid [m]
-     *
-     * @param  $lat
-     * @return float
-     */
-    public static function WGS84EarthRadius($lat)
-    {
-        $An = self::WGS84_A * self::WGS84_A * cos($lat);
-        $Bn = self::WGS84_B * self::WGS84_B * sin($lat);
-        $Ad = self::WGS84_A * cos($lat);
-        $Bd = self::WGS84_B * sin($lat);
-        return sqrt(($An * $An + $Bn * $Bn) / ($Ad * $Ad + $Bd * $Bd));
     }
 }

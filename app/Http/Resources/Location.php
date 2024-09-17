@@ -16,12 +16,12 @@ class Location extends JsonResource
     public function toArray($request)
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'lat' => $this->lat,
-            'lng' => $this->lng,
+            'id' => is_array($this->resource) ? $this->resource['id'] : $this->id,
+            'name' => is_array($this->resource) ? $this->resource['name'] : $this->name,
+            'lat' => is_array($this->resource) ? $this->resource['lat'] : $this->lat,
+            'lng' => is_array($this->resource) ? $this->resource['lng'] : $this->lng,
             'owner' => [
-                'name' => $this->owner->name,
+                'name' => is_array($this->resource) ? $this->resource['owner']['name'] : $this->owner->name,
             ],
         ];
     }
